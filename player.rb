@@ -1,94 +1,103 @@
 class Player
 
   @started_to_rest = false
-  @use_turn = false
-  $shoot_limit = 3
+  @user_turn = false
   $health_min_live = 10
   $health_max_live = 15
   
   def play_turn(warrior)
     # add your code here
-    @use_turn = false
+    @user_turn = false
     
     # Rescue first
     rescue_captive(warrior)
     
     # Rest for full charge
     rest_safe_to_full(warrior)
-    
-    # Determine if need to turn around, then turn
-    turn_around(warrior)
       
     # Determine need to walk
     walk(warrior)
     
+    # Determine to attack
+    attack_enemy(warrior)
+    
     # Determine to shoot
-    shoot_enamy(warrior)
+    shoot_enemy(warrior)
+    
+    # Determine if need to turn around, then turn
+    turn_around(warrior)
     
     # Determine if need to rest
     rest(warrior)
-    
-    # Determine to attack
-    attack_enamy(warrior)
   end
   
   def turn_around(warrior)
-    if warrior.feel.wall?
+    if warrior.feel.wall? or is_shooting_target(warrior.look(:backward)) and not @user_turn
       warrior.pivot!
+      @user_turn = true
     end
   end
   
-  def attack_enamy(warrior)
+  def attack_enemy(warrior)
     # Determine to attack
-    if is_enamy(warrior) && !@use_turn
+    if is_enamy(warrior) and !@user_turn
       warrior.attack!
-      @use_turn = true
+      @user_turn = true
     end
   end
   
-  def shoot_enamy(warrior)
-    if (warrior.look.length > 0) && !@use_turn && ($shoot_limit > 0)
+  def shoot_enemy(warrior)
+    if !@user_turn and is_shooting_target(warrior.look)
       warrior.shoot!
-      $shoot_limit = $shoot_limit-1
-      @use_turn = true
+      @user_turn = true
     end
   end
   
   def walk(warrior)
-    if warrior.feel.empty? && !is_need_rest(warrior) && !(@started_to_rest) && !@use_turn
+    if warrior.feel.empty? and !is_shooting_target(warrior.look) and !(@started_to_rest) and !@user_turn
       warrior.walk!
-      @use_turn = true
+      @user_turn = true
     end
   end
   
-  def rest(warrior)
-    if warrior.feel.empty? && is_need_rest(warrior) && !is_feel_captive(warrior) && !(@started_to_rest) 
-      rest_start(warrior)
+  # Determine is there any target need to fire
+  def is_shooting_target(look)
+    @target = false
+    look.each do |element|
+      if element.to_s == "Wizard" or element.to_s == "Archer"
+        puts "We found a target to shoot for..."
+        @target = true
+      end
     end
+    return @target
+  end
+  
+  def rest(warrior)
+    rest_start(warrior) if warrior.feel.empty? and is_need_rest(warrior) and !is_feel_captive(warrior) and not (@started_to_rest) 
   end
 
   def rescue_captive(warrior) 
-    if warrior.feel.captive? && !@use_turn
+    if warrior.feel.captive? and not@user_turn
       warrior.rescue!
-      @use_turn = true
-    elsif warrior.feel(:backward).captive? && !@use_turn
+      @user_turn = true
+    elsif warrior.feel(:backward).captive? and not@user_turn
       warrior.rescue!(:backward)
-      @use_turn = true
+      @user_turn = true
     end
   end
   
   def is_enamy(warrior)
-    return !(warrior.feel.empty?) && !warrior.feel.captive? && !warrior.feel.wall?
+    return !(warrior.feel.empty?) && !(warrior.feel.captive?) && !(warrior.feel.wall?)
   end
 
   def rest_start(warrior)
-    if !(warrior.feel(:backward).wall?) && !@use_turn
+    if not (warrior.feel(:backward).wall?) and not @user_turn
       warrior.walk!(:backward)
-      @use_turn = true
-    elsif warrior.feel(:backward).wall? && !@use_turn
+      @user_turn = true
+    elsif warrior.feel(:backward).wall? and not @user_turn
       warrior.rest!
       @started_to_rest = true
-      @use_turn = true
+      @user_turn = true
     end
   end
 
@@ -107,9 +116,9 @@ class Player
   
   # rest until full
   def rest_safe_to_full(warrior)
-    if (@started_to_rest) && !is_full_health(warrior) && !@use_turn
+    if (@started_to_rest) and not is_full_health(warrior) and not @user_turn
       warrior.rest!
-      @use_turn = true
+      @user_turn = true
     elsif is_full_health(warrior) 
       @started_to_rest = false
     end
