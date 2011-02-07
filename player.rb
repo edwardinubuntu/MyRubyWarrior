@@ -3,7 +3,7 @@ class Player
   @started_to_rest = false
   @user_turn = false
   $health_min_live = 10
-  $health_max_live = 15
+  $health_max_live = 20
   
   def play_turn(warrior)
     # add your code here
@@ -14,21 +14,23 @@ class Player
     
     # Rest for full charge
     rest_safe_to_full(warrior)
-      
-    # Determine need to walk
-    walk(warrior)
-    
+
     # Determine to attack
     attack_enemy(warrior)
     
     # Determine to shoot
     shoot_enemy(warrior)
     
+    # Determine if need to rest
+    rest(warrior)  
+    
+    # Determine need to walk
+    walk(warrior)
+    
     # Determine if need to turn around, then turn
     turn_around(warrior)
     
-    # Determine if need to rest
-    rest(warrior)
+    $last_warrior_health = warrior.health
   end
   
   def turn_around(warrior)
@@ -65,7 +67,7 @@ class Player
     @target = false
     look.each do |element|
       if element.to_s == "Wizard" or element.to_s == "Archer"
-        puts "We found a target to shoot for..."
+        # puts "We found a target to shoot for..."
         @target = true
       end
     end
@@ -73,7 +75,7 @@ class Player
   end
   
   def rest(warrior)
-    rest_start(warrior) if warrior.feel.empty? and is_need_rest(warrior) and !is_feel_captive(warrior) and not (@started_to_rest) 
+    rest_start(warrior) if warrior.feel.empty? and is_need_rest(warrior) and not is_under_attack(warrior) and not (@started_to_rest) 
   end
 
   def rescue_captive(warrior) 
@@ -91,10 +93,7 @@ class Player
   end
 
   def rest_start(warrior)
-    if not (warrior.feel(:backward).wall?) and not @user_turn
-      warrior.walk!(:backward)
-      @user_turn = true
-    elsif warrior.feel(:backward).wall? and not @user_turn
+    if not @user_turn
       warrior.rest!
       @started_to_rest = true
       @user_turn = true
@@ -111,7 +110,11 @@ class Player
 
   # is the health is full charge
   def is_full_health(warrior)
-    return warrior.health == $health_max_live
+    return warrior.health >= $health_max_live
+  end
+  
+  def is_under_attack(warrior)
+    return warrior.health < $last_warrior_health
   end
   
   # rest until full
