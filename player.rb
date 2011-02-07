@@ -3,7 +3,7 @@ class Player
   @started_to_rest = false
   @user_turn = false
   $health_min_live = 10
-  $health_max_live = 20
+  $health_max_live = 15
   
   def play_turn(warrior)
     # add your code here
@@ -65,17 +65,22 @@ class Player
   # Determine is there any target need to fire
   def is_shooting_target(look)
     @target = false
+    @captive_infront = false
     look.each do |element|
       if element.to_s == "Wizard" or element.to_s == "Archer"
         # puts "We found a target to shoot for..."
         @target = true
+        break
+      elsif element.to_s == "Captive"
+        @captive_infront = true
+        break
       end
     end
-    return @target
+    return @target && !@captive_infront
   end
   
   def rest(warrior)
-    rest_start(warrior) if warrior.feel.empty? and is_need_rest(warrior) and not is_under_attack(warrior) and not (@started_to_rest) 
+    rest_start(warrior) if is_need_rest(warrior) and not is_under_attack(warrior) and not (@started_to_rest) 
   end
 
   def rescue_captive(warrior) 
