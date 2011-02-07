@@ -1,9 +1,14 @@
 class Player
 
   @started_to_rest = false
+  @use_turn = false
+  $shoot_limit = 3
+  $health_min_live = 10
+  $health_max_live = 15
   
   def play_turn(warrior)
     # add your code here
+    @use_turn = false
     
     # Rescue first
     rescue_captive(warrior)
@@ -16,6 +21,9 @@ class Player
       
     # Determine need to walk
     walk(warrior)
+    
+    # Determine to shoot
+    shoot_enamy(warrior)
     
     # Determine if need to rest
     rest(warrior)
@@ -32,28 +40,40 @@ class Player
   
   def attack_enamy(warrior)
     # Determine to attack
-    if is_enamy(warrior)
+    if is_enamy(warrior) && !@use_turn
       warrior.attack!
+      @use_turn = true
+    end
+  end
+  
+  def shoot_enamy(warrior)
+    if (warrior.look.length > 0) && !@use_turn && ($shoot_limit > 0)
+      warrior.shoot!
+      $shoot_limit = $shoot_limit-1
+      @use_turn = true
     end
   end
   
   def walk(warrior)
-    if warrior.feel.empty? && !is_need_rest(warrior) && !(@started_to_rest)
+    if warrior.feel.empty? && !is_need_rest(warrior) && !(@started_to_rest) && !@use_turn
       warrior.walk!
+      @use_turn = true
     end
   end
   
   def rest(warrior)
-    if warrior.feel.empty? && is_need_rest(warrior) && !is_feel_captive(warrior) && !(@started_to_rest)
+    if warrior.feel.empty? && is_need_rest(warrior) && !is_feel_captive(warrior) && !(@started_to_rest) 
       rest_start(warrior)
     end
   end
 
-  def rescue_captive(warrior)
-    if warrior.feel.captive?
+  def rescue_captive(warrior) 
+    if warrior.feel.captive? && !@use_turn
       warrior.rescue!
-    elsif warrior.feel(:backward).captive?
+      @use_turn = true
+    elsif warrior.feel(:backward).captive? && !@use_turn
       warrior.rescue!(:backward)
+      @use_turn = true
     end
   end
   
@@ -62,16 +82,18 @@ class Player
   end
 
   def rest_start(warrior)
-    if !(warrior.feel(:backward).wall?)
+    if !(warrior.feel(:backward).wall?) && !@use_turn
       warrior.walk!(:backward)
-    elsif warrior.feel(:backward).wall?
+      @use_turn = true
+    elsif warrior.feel(:backward).wall? && !@use_turn
       warrior.rest!
       @started_to_rest = true
+      @use_turn = true
     end
   end
 
   def is_need_rest(warrior)
-    return warrior.health < 8
+    return warrior.health < $health_min_live
   end
   
   def is_feel_captive(warrior)
@@ -80,14 +102,15 @@ class Player
 
   # is the health is full charge
   def is_full_health(warrior)
-    return warrior.health == 20
+    return warrior.health == $health_max_live
   end
   
   # rest until full
   def rest_safe_to_full(warrior)
-    if (@started_to_rest) && !is_full_health(warrior)
+    if (@started_to_rest) && !is_full_health(warrior) && !@use_turn
       warrior.rest!
-    elsif is_full_health(warrior)
+      @use_turn = true
+    elsif is_full_health(warrior) 
       @started_to_rest = false
     end
   end
