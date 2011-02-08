@@ -3,7 +3,7 @@ Level Score: 74
 Time Bonus: 9
 Clear Bonus: 17
 Level Grade: S
-Total Score: 462 + 100 = 562
+Total Score: 489 + 100 = 589
 Your average grade for this tower is: A
 
   Level 1: S
@@ -11,7 +11,7 @@ Your average grade for this tower is: A
   Level 3: A
   Level 4: A
   Level 5: A
-  Level 6: D
+  Level 6: A
   Level 7: A
   Level 8: S
   Level 9: S

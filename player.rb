@@ -9,6 +9,8 @@ class Player
     # add your code here
     @user_turn = false
     
+    # puts warrior.look
+    
     # Rescue first
     rescue_captive(warrior)
     
@@ -62,12 +64,29 @@ class Player
     end
   end
   
+  def is_captive_nearby(look)
+    @captive_infront = false
+    look.each do |element|
+      if element.to_s == "Thick Sludge" or element.to_s == "Wizard" or element.to_s == "Archer"
+        @captive_infront = false
+        break
+      elsif element.to_s == "Captive"
+        @captive_infront = true
+        break
+      end
+    end
+    return @captive_infront
+  end
+  
   # Determine is there any target need to fire
   def is_shooting_target(look)
     @target = false
     @captive_infront = false
     look.each do |element|
-      if element.to_s == "Wizard" or element.to_s == "Archer"
+      if element.to_s == "Thick Sludge"
+        @target = false
+        break
+      elsif element.to_s == "Wizard" or element.to_s == "Archer"
         # puts "We found a target to shoot for..."
         @target = true
         break
@@ -86,6 +105,12 @@ class Player
   def rescue_captive(warrior) 
     if warrior.feel.captive? and not@user_turn
       warrior.rescue!
+      @user_turn = true
+    elsif is_captive_nearby(warrior.look) and not@user_turn
+      warrior.walk!
+      @user_turn = true
+    elsif is_captive_nearby(warrior.look(:backward)) and not@user_turn
+      warrior.pivot!
       @user_turn = true
     elsif warrior.feel(:backward).captive? and not@user_turn
       warrior.rescue!(:backward)
